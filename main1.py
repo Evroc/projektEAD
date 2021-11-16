@@ -32,7 +32,7 @@ def main():
     cnt=0
     #print(df0['Name'])
     for i in range(0, len(df0['Name'])):
-        if str(df0['Name'][i]) not in visited:
+        if df0.loc[df0['Name']][i].isin(visited):
             visited.append(df0['Name'][i])
 
             cnt += 1
@@ -44,5 +44,10 @@ def main():
     print(df0.nunique(axis='index'))
     #df0.query('Name'==)
     gui=show(df0)
+
+    #TODO ZAD4
+    df0['frequency_male']=""
+    df0['frequency_female']=""
+
 if __name__ == '__main__':
     main()
