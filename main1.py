@@ -8,8 +8,8 @@ import sqlite3
 #link do poleceń https://jug.dpieczynski.pl/lab-ead/Lab%2004%20-%20Projekt%20blok1_2021.html
 
 def load_data():
-    path = os.getcwd()+'\Data'
-    #path = os.getcwd()+'\Data_test' #_test
+    #path = os.getcwd()+'\Data'
+    path = os.getcwd()+'\Data_test' #_test
     all_files = glob.glob(path + "/*.txt")
     #print(all_files) sprawdzenie co wczytuje
 
@@ -340,16 +340,73 @@ def task12_13_14(df0):
     # print(deaths)
     # print(b_years)
 
+def task10(df0, years):
+    df_fem = df0[df0['Sex'] == 'F']
+    df_mal = df0[df0['Sex'] == 'M']
+    male_names = df_mal[['Name', 'Number']]
+    female_names = df_fem['Name']
+    #gui=show(female_names)
+    female_names = female_names.drop_duplicates(keep='first').sort_values(ascending=True)
+    male_names = male_names.Name.drop_duplicates(keep='first').sort_values( ascending=True)
+    print(len(male_names))
+    male_names = male_names.reset_index(drop=True)
+    female_names = female_names.reset_index(drop=True)
+    m_names = pd.DataFrame()
+    f_names = pd.DataFrame()
+    all_names = pd.DataFrame()
+    all_names['Fem Names'] = female_names
+    #all_names['Mal Names'] = male_names
+    all_names['f+m_name'] = female_names.isin(male_names)
+    m_names['Name'] = male_names
+    f_names['Name'] = female_names
+    f_m_names=all_names[all_names['f+m_name']==True]
+    f_m_names = f_m_names.rename(columns={'Fem Names': 'Names'})
+    f_m_names=f_m_names['Names']
+
+    # for year in years:
+    #     df_year_fem = df_mal[df_fem['Year'] == year]
+    #     df_year_mal = df_mal[df_mal['Year'] == year]
+
+
+    #m_names['e']=m_names.isin(female_names)
+    #male_names=male_names.assign(dft)
+    #print(type(dft))
+    gui = show(f_m_names)
+    # gui=show(male_names)
+
+
+    # df0['f+m name?'] = df0['Name'].isin(female_names.loc[female_names.isin(male_names)])
+    # male_names = df0[df0['f+m name?']].loc[df0['Sex'] == 'M'].sort_values('Name', ascending=True)
+    # female_names = df0[df0['f+m name?']].loc[df0['Sex'] == 'F'].sort_values('Name', ascending=True)
+
+
+    # for year in years:
+    #
+    # df1=df0[df0.duplicated(subset='Name', keep=False)]
+    # print(len(df0))
+    # #print(df1)
+    # list = df1['Name'].to_list()
+    # print(len(list))
+    #gui=show(df1)
+
+    # common_names =[]
+    #
+    # for i in range(0, len(male_names)):
+    #     if male_names[i] in female_names:
+    #         common_names.append(male_names[i])
+
+    #print(common_names)
 if __name__ == '__main__':
     df, years=load_data()
     data_from4 = task4(df, False)
     data_from6, mal_df, fem_df = task6(data_from4, years, False)
 
     #wywolywanie kolejnych zadan
-    task2_3(df)
-    task4(df, True)
-    task5(df, years)
-    task6(data_from4, years, True)
-    task7(df, years, data_from6, data_from4)
-    task8(df, years, mal_df, fem_df)
-    task12_13_14(df)
+    # task2_3(df)
+    # task4(df, True)
+    # task5(df, years)
+    # task6(data_from4, years, True)
+    # task7(df, years, data_from6, data_from4)
+    # task8(df, years, mal_df, fem_df)
+    task10(df, years)
+    # task12_13_14(df)
