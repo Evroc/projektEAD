@@ -4,12 +4,12 @@ import os
 from pandasgui import show #pip install pypiwin32
 import numpy as np
 import matplotlib.pyplot as plt
-
+import sqlite3
 #link do poleceń https://jug.dpieczynski.pl/lab-ead/Lab%2004%20-%20Projekt%20blok1_2021.html
 
 def load_data():
-    #path = os.getcwd()+'\Data'
-    path = os.getcwd()+'\Data_test' #_test
+    path = os.getcwd()+'\Data'
+    #path = os.getcwd()+'\Data_test' #_test
     all_files = glob.glob(path + "/*.txt")
     #print(all_files) sprawdzenie co wczytuje
 
@@ -18,47 +18,51 @@ def load_data():
 
     for filename in all_files:
         df = pd.read_csv(filename, header=None)
-        year=filename.replace(path+"\yob", '')
-        year=year.replace(".txt", '')
+        year = filename.replace(path+"\yob", '')
+        year = year.replace(".txt", '')
         years.append(year)
-        df['Year']=year
-        df0=df0.append(df)
+        df['Year'] = year
+        df0 = df0.append(df)
 
-    df0=df0.rename(columns={0:'Name', 1:'Sex', 2:'Number'})
+    df0=df0.rename(columns={0: 'Name', 1: 'Sex', 2: 'Number'})
 
     return df0, years
 
 def task2_3(df0):
-    print(f'Ilosc nadanych unikalnych imion bez rozrozniania na meskie i zenskie: {df0.nunique()[0]} ')  # TODO ZAD2 3265 dla 80-87
-    df_m=df0[df0['Sex']=='M']
-    df_f=df0[df0['Sex']=='F']
+    print("Zad2: ")
+    print(f'Ilosc nadanych unikalnych imion bez rozrozniania na meskie i zenskie: {df0.nunique()[0]} ')
+    print("===================")
+    df_m = df0[df0['Sex'] == 'M']
+    df_f = df0[df0['Sex'] == 'F']
+    print("Zad3: ")
     print(f'Ilosc nadanych unikalnych imion meskich: {df_m.nunique()[0]} ')
     print(f'Ilosc nadanych unikalnych imion zenskich: {df_f.nunique()[0]} ')
+    print("===================")
 
 def task4_f(df):
     df.groupby(['Year', 'Sex']).sum().unstack('Sex')
 
-    fem_births = df[df['Sex']=='F'].Number
+    fem_births = df[df['Sex'] == 'F'].Number
     df['freq fem']=fem_births/fem_births.sum()
 
-    mal_births=df[df['Sex']=='M'].Number
-    df['freq m']=mal_births/mal_births.sum()
+    mal_births=df[df['Sex'] == 'M'].Number
+    df['freq m'] = mal_births/mal_births.sum()
 
     return df
 
-def task4(df0, years, show):
+def task4(df0, ifprint):
     #TODO Rozwiazanie bazuje na: https://pandasguide.readthedocs.io/en/latest/Pandas/babyname.html
-    total_n_births=df0.pivot_table('Number', index='Year', columns='Sex', aggfunc=sum)
     results = df0.groupby(['Year', 'Sex']).apply(task4_f)
-    if show==True:
-        gui=show(results)
+    if ifprint==True:
+        print("Zad 4:")
+        print(results)
+        print("===================")
 
     return results
 
 def task5(df0, years):
     df_p=pd.pivot_table(df0, index=['Name'], columns=['Year', 'Sex'])
     df_p=df_p['Number']
-    gui=show(df_p)
     n_births=[]
 
     for i in years:
@@ -72,25 +76,17 @@ def task5(df0, years):
         births_ratio_f_to_m.append((n_births[i][0]/n_births[i][1]-1)*100)
         total_n_births.append((n_births[i][0]+n_births[i][1]))
 
-    # print("F")
-    # print(n_births_f)
-    # print("M")
-    # print(n_births_m)
-    # print("T")
-    # print(total_n_births)
-    # print("R")
-    # print(births_ratio_f_to_m)
     fixed_years = list(map(int, years))
     f, axes = plt.subplots(2)
     axes[0].bar(fixed_years,total_n_births)
-    axes[0].set_title("births(years)")
+    axes[0].set_title("Zad 5_1 urodzenia(lata)")
     axes[1].bar(fixed_years,births_ratio_f_to_m)
-    axes[1].set_ylabel("% more f than m")
-    axes[1].set_title("f/m ratio")
-    plt.xticks(np.arange(min(fixed_years), max(fixed_years) + 1, 5.0))
+    axes[1].set_ylabel("% (wiecej/mniej) zenskich imion wzgledem meskich") #0% = tyle samo zenskich imion i meskich, 100% = 100% wiecej zenskich, -30% = o 30% mniej zenskich imion niz meskich
+    axes[1].set_title("Zad 5_2 f/m ratio")
+    plt.xticks(np.arange(min(fixed_years), max(fixed_years) + 1, 20.0))
     plt.show()
 
-def task6(df, years, show_gui):
+def task6(df, years, ifprint):
 
     many_F_dfs = []
     many_M_dfs = []
@@ -99,7 +95,7 @@ def task6(df, years, show_gui):
     mal_df = pd.DataFrame()
 
     for year in years:
-        df1 = df[df['Year']==year]
+        df1 = df[df['Year'] == year]
 
         df_fem = df1[df1['Sex'] == 'F']
         df_mal = df1[df1['Sex'] == 'M']
@@ -137,13 +133,15 @@ def task6(df, years, show_gui):
 
     mal_df = mal_df.sort_values('Number', ascending=False).head(1000)
 
-    if show_gui == True:
+    if ifprint == True:
+        print("Zad6: ")
         #TODO 1000 most popular male names
-        gui=show(mal_df)
+        print(mal_df)
         #-----------------------
         #TODO 1000 most popular female names
-        gui = show(fem_df)
+        print(fem_df)
         #-----------------------
+        print("===================")
 
     #Do nastepnego zadania potrzebuje najpopularniejsze imie zenskie, wiec znajde je juz tutaj i przekaze
     max_Fem_Name = fem_df.idxmax()
@@ -153,7 +151,7 @@ def task6(df, years, show_gui):
 
 def task7(df, years, most_popular_fem_name, df_with_freq):
    # gui=show(df_with_freq)
-    to_note = ['1881', '1883'] #tu podać jakie lata sprawdzać
+    to_note = ['1930', '1970', '2015'] #tu podać jakie lata sprawdzać
     notedJ = []
     notedF = []
 
@@ -211,11 +209,12 @@ def task7(df, years, most_popular_fem_name, df_with_freq):
     ax1.tick_params(axis='y', labelcolor=color)
     ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
     color = 'tab:blue'
-    ax2.set_ylabel('JohnsFreq', color=color)
+    ax2.set_ylabel('name freq', color=color)
     ax2.plot(fixed_years, Johns_freq_list, color=color)
     ax2.tick_params(axis='y', labelcolor=color)
     fig.tight_layout()
-    plt.xticks(np.arange(min(fixed_years), max(fixed_years) + 1, 5.0))
+    plt.xticks(np.arange(min(fixed_years), max(fixed_years) + 1, 20.0))
+    plt.title("Zad7_1")
     plt.show()
 
 
@@ -224,26 +223,27 @@ def task7(df, years, most_popular_fem_name, df_with_freq):
     color = 'tab:red'
     ax1.set_xlabel('Years')
     ax1.set_ylabel(most_popular_fem_name, color=color)
-    ax1.plot(years, mostF_List, color=color)
+    ax1.plot(fixed_years, mostF_List, color=color)
     ax1.tick_params(axis='y', labelcolor=color)
     ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
     color = 'tab:blue'
-    ax2.set_ylabel('Most popular female name freq', color=color)
-    ax2.plot(years, mostF_freq_list, color=color)
+    ax2.set_ylabel('name freq', color=color)
+    ax2.plot(fixed_years, mostF_freq_list, color=color)
     ax2.tick_params(axis='y', labelcolor=color)
+    plt.xticks(np.arange(min(fixed_years), max(fixed_years) + 1, 20.0))
     fig.tight_layout()
-
+    plt.title("Zad7_2")
     plt.show()
-
+    print("Zad7: ")
     for i in range(0, len(notedJ)):
         print(f'W roku {notedJ[i][0]} urodzilo sie {notedJ[i][1][1]} mezczyzn o imieniu John i {notedF[i][1][1]} kobiet o imieniu {most_popular_fem_name}')
-
+    print("===================")
     # f, axes = plt.subplots(2)
     # axes[0].bar(years, johns_list)
     # axes[0].set_title("Imiona John(m) w czasie")
     # plt.show()
 
-def task8(df, years, top1000_mal, top1000_fem):
+def task8(df, years, top1000_mal, top1000_fem): #nie bylem do konca pewny polecenia do tego zadania - top1000 jest ze wszystkich dostepnych lat i co roku porownuje imiona do tego zbioru
     top1000names_m = top1000_mal.index.values.tolist()
     top1000names_f = top1000_fem.index.values.tolist()
     df_fem=df[df['Sex']=='F']
@@ -251,6 +251,7 @@ def task8(df, years, top1000_mal, top1000_fem):
     ratio_f=[]
     ratio_m=[]
     diff_list=[]
+
     for year in years:
         times_in_1000_this_year_male=0
         times_in_1000_this_year_female = 0
@@ -266,7 +267,7 @@ def task8(df, years, top1000_mal, top1000_fem):
             if f_list[i] in top1000names_f:
                 times_in_1000_this_year_female+=1
 
-        ratio_m.append(times_in_1000_this_year_male*100/len(top1000names_m)) #i know that top1000 means i should divide by 1000, but IN CASE i would like later to swap top1000 to f.e. 100 - i'll leave it like that
+        ratio_m.append(times_in_1000_this_year_male*100/len(top1000names_m)) #wiem ze top 1000 ma 1000 imion, ale jakbym kiedys zmienil z top1000 na np top 100 to bedzie latwiej
         ratio_f.append(times_in_1000_this_year_female*100 / len(top1000names_f))
         diff_list.append([(abs(times_in_1000_this_year_male-times_in_1000_this_year_female))*100/len(top1000names_m), year])
         #gui = show(df_year_fem)
@@ -278,29 +279,77 @@ def task8(df, years, top1000_mal, top1000_fem):
         # ratio_m_thisyear = sum_m_thisyear/sum_m_overall
         # ratio_m.append(ratio_m_thisyear)
 
+    print("Zad8: ")
     print(f'Maksymalna roznica w roznorodnosci wyniosla {max(diff_list)[0]} punkty procentowe i pojawila sie w {max(diff_list)[1]} roku')
+    print("===================")
     fixed_years=list(map(int, years))
 
     fig, ax = plt.subplots()
     ax.plot(fixed_years, ratio_m, label='ratio m')
     ax.plot(fixed_years, ratio_f, label='ratio f')
-    plt.xticks(np.arange(min(fixed_years), max(fixed_years) + 1, 5.0))
+    ax.set_ylabel('% imion danego roku należących do zbioru top1000(zbior ze wszystkich lat)')
+    plt.title("Zad8")
+    plt.xticks(np.arange(min(fixed_years), max(fixed_years) + 1, 20.0))
     ax.legend()
     plt.show()
 
-def task11():
-    ...
+def task12_13_14(df0):
+    conn = sqlite3.connect('USA_ltper_1x1.sqlite')
+    df_f = pd.read_sql('SELECT Year, Age, lx, dx, LLx FROM USA_fltper_1x1', conn)
+    df_m = pd.read_sql('SELECT Year, Age, lx, dx, LLx FROM USA_mltper_1x1', conn)
+    df = pd.concat([df_m, df_f], ignore_index=True)
+    #gui = show(df)
+    df0=df0[df0['Year'].astype(int)>1958]
 
+    df_age0=df[df['Age']==0]
+    #gui = show(df_age0)
 
+    births=[]
+    b_years=[]
+    deaths=[]
+    births_minus_deaths=[]
+    survival_ratio=[]
+
+    for year in range(1959,2018):
+        df1 = df0[df0['Year'].astype(int) == year] #stad urodzenia w danym roku
+        df2 = df[df['Year'].astype(int) == year] #stad zgony w danym roku
+        df_a = df_age0[df_age0['Year'].astype(int) == year]
+        survival_ratio.append((df1.Number.sum() - df_a.dx.sum()) / df1.Number.sum())
+
+        deaths.append(df2.dx.sum())
+        births.append(df1.Number.sum())
+        births_minus_deaths.append(df1.Number.sum()-df2.dx.sum())
+        b_years.append(year)
+        #gui=show(df1)
+
+    # print('--------------')
+    # print(survival_ratio)
+    # print('--------------')
+
+    plt.plot(b_years, births_minus_deaths)
+    plt.title("Zad13 Przyrost naturalny")
+    plt.xticks(np.arange(min(b_years), max(b_years) + 1, 5.0))
+    plt.show()
+
+    plt.plot(b_years, survival_ratio)
+    plt.title("Zad14 Survival ratio")
+    plt.xticks(np.arange(min(b_years), max(b_years) + 1, 5.0))
+    plt.show()
+
+    # print(births)
+    # print(deaths)
+    # print(b_years)
 
 if __name__ == '__main__':
     df, years=load_data()
-    data_from4 = task4(df, years, False)
+    data_from4 = task4(df, False)
     data_from6, mal_df, fem_df = task6(data_from4, years, False)
 
-    #task2_3(df)
-    #task4(df, years, True)
-    #task5(df, years)
-    #task6(data_from4, years, True)
+    #wywolywanie kolejnych zadan
+    task2_3(df)
+    task4(df, True)
+    task5(df, years)
+    task6(data_from4, years, True)
     task7(df, years, data_from6, data_from4)
-    #task8(df, years, mal_df, fem_df)
+    task8(df, years, mal_df, fem_df)
+    task12_13_14(df)
