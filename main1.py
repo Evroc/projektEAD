@@ -72,8 +72,9 @@ def task4(df0, years, show):
     results = df0.groupby(['Year', 'Sex']).apply(task4_f)
     if show==True:
         gui=show(results)
+
     return results
-def task6(df, years):
+def task6(df, years, show):
 
     many_F_dfs = []
     many_M_dfs = []
@@ -109,9 +110,7 @@ def task6(df, years):
 
     fem_df = fem_df.sort_values('Number', ascending=False).head(1000)
 
-    #TODO 1000 most popular female names
-    #gui = show(fem_df)
-    # -----------------------
+
 
     for i in range(0, len(many_M_dfs)):
         if k == 0:
@@ -122,10 +121,13 @@ def task6(df, years):
 
     mal_df = mal_df.sort_values('Number', ascending=False).head(1000)
 
-    #TODO 1000 most popular male names
-    #gui=show(mal_df)
-    # -----------------------
-
+    if show == True:
+        #TODO 1000 most popular male names
+        gui=show(mal_df)
+        #-----------------------
+        #TODO 1000 most popular female names
+        gui = show(fem_df)
+        #-----------------------
 
     #For the next task I have to find most popular female name:
     max_Fem_Name = fem_df.idxmax()
@@ -134,37 +136,54 @@ def task6(df, years):
 
     return max_Fem_Name[0]
 
-def task7(df, years, most_popular_fem_name):
+def task7(df, years, most_popular_fem_name, df_with_freq):
+   # gui=show(df_with_freq)
     to_note = ['1881', '1883'] #tu podać jakie lata sprawdzać
-    noted = []
+    notedJ = []
+    notedF = []
+
     df_Johns = pd.DataFrame()
     df_MostF = pd.DataFrame()
 
+    df_Johns_freq = pd.DataFrame()
+    df_MostF_freq = pd.DataFrame()
+
     for year in years:
         df1 = df[df['Year'] == year]
+        df_with_freq1 = df_with_freq[df_with_freq['Year'] == year]
 
-        df2 = df1[df1['Name']=='John']
-        df2 = df2[df2['Sex'] == 'M']
-        df2 = df2[['Name', 'Number']]
+        df_withJohn = df1[df1['Name']=='John']
+        df_withJohn = df_withJohn[df_withJohn['Sex'] == 'M']
+        df_withJohn = df_withJohn[['Name', 'Number']]
 
-        df3=df1[df1['Name']==most_popular_fem_name]
-        df3 = df3[df3['Sex'] == 'F']
-        df3 = df3[['Name', 'Number']]
+        df_withJohn_freq = df_with_freq1[df_with_freq1['Name']=='John']
+        df_withJohn_freq = df_withJohn_freq[df_withJohn_freq['Sex'] == 'M']
+        df_withJohn_freq = df_withJohn_freq[['Name', 'freq m']]
 
-        #gui=show(df3)
+        df_withMostF = df1[df1['Name'] == most_popular_fem_name]
+        df_withMostF = df_withMostF[df_withMostF['Sex'] == 'F']
+        df_withMostF = df_withMostF[['Name', 'Number']]
+
+        df_withMostF_freq = df_with_freq1[df_with_freq1['Name']==most_popular_fem_name]
+        df_withMostF_freq = df_withMostF_freq[df_withMostF_freq['Sex'] == 'F']
+        df_withMostF_freq = df_withMostF_freq[['Name', 'freq fem']]
 
         if year in to_note:
-            print(year)
-            noted.append([year, df2.sum()])
+            notedJ.append([year, df_withJohn.sum()])
+            notedF.append([year, df_withMostF.sum()])
 
-        df_Johns=df_Johns.append(df2)
-        df_MostF=df_MostF.append(df3)
+        df_Johns=df_Johns.append(df_withJohn)
+        df_MostF=df_MostF.append(df_withMostF)
+
+        df_Johns_freq=df_Johns_freq.append(df_withJohn_freq)
+        df_MostF_freq = df_MostF_freq.append(df_withMostF_freq)
 
     johns_list=df_Johns['Number'].to_list()
     mostF_List=df_MostF['Number'].to_list()
+    Johns_freq_list=df_Johns_freq['freq m'].to_list()
+    mostF_freq_list=df_MostF_freq['freq fem'].to_list()
 
     #https://matplotlib.org/stable/gallery/subplots_axes_and_figures/two_scales.html
-
     fig, ax1 = plt.subplots()
 
     color = 'tab:red'
@@ -172,23 +191,39 @@ def task7(df, years, most_popular_fem_name):
     ax1.set_ylabel('Johns', color=color)
     ax1.plot(years, johns_list, color=color)
     ax1.tick_params(axis='y', labelcolor=color)
-
     ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
-
     color = 'tab:blue'
-    ax2.set_ylabel('MostPopularFemaleName', color=color)  # we already handled the x-label with ax1
-    ax2.plot(years, mostF_List, color=color)
+    ax2.set_ylabel('JohnsFreq', color=color)
+    ax2.plot(years, Johns_freq_list, color=color)
     ax2.tick_params(axis='y', labelcolor=color)
+    fig.tight_layout()
 
-    fig.tight_layout()  # otherwise the right y-label is slightly clipped
     plt.show()
+
+
+    fig, ax1 = plt.subplots()
+
+    color = 'tab:red'
+    ax1.set_xlabel('Years')
+    ax1.set_ylabel(most_popular_fem_name, color=color)
+    ax1.plot(years, mostF_List, color=color)
+    ax1.tick_params(axis='y', labelcolor=color)
+    ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+    color = 'tab:blue'
+    ax2.set_ylabel('Most popular female name freq', color=color)
+    ax2.plot(years, mostF_freq_list, color=color)
+    ax2.tick_params(axis='y', labelcolor=color)
+    fig.tight_layout()
+
+    plt.show()
+
 
     # print(johns_list)
     # print(noted[0][0]) #rok
     # print(noted[0][1][1]) #liczba
 
-    for i in range(0, len(noted)):
-        print(f'W roku {noted[i][0]} bylo {noted[i][1][1]} mezczyzn o imieniu John')
+    for i in range(0, len(notedJ)):
+        print(f'W roku {notedJ[i][0]} urodzilo sie {notedJ[i][1][1]} mezczyzn o imieniu John i {notedF[i][1][1]} kobiet o imieniu {most_popular_fem_name}')
 
     # f, axes = plt.subplots(2)
     # axes[0].bar(years, johns_list)
@@ -228,12 +263,13 @@ def task5(df0, years):
     axes[1].set_title("f/m ratio")
     plt.show()
 
+
 if __name__ == '__main__':
     df, years=load_data()
-    task4(df, years, True)
+    #task4(df, years, True)
 
-    #data_from4=task4(df, years, False)
-    #task6(data_from4, years)
+    data_from4=task4(df, years, False)
+    #task6(data_from4, years, True)
 
-    #data_from6=task6(data_from4, years)
-    #task7(df0, years, data_from6, data_from4)
+    data_from6=task6(data_from4, years, False)
+    task7(df, years, data_from6, data_from4)
