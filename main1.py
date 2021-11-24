@@ -8,10 +8,10 @@ import sqlite3
 #link do poleceń https://jug.dpieczynski.pl/lab-ead/Lab%2004%20-%20Projekt%20blok1_2021.html
 
 def load_data():
-    #path = os.getcwd()+'\Data'
-    path = os.getcwd()+'\Data_test' #_test
+    path = os.getcwd()
+    #path = os.getcwd()+'\Data_test' #_test
     all_files = glob.glob(path + "/*.txt")
-    #print(all_files) sprawdzenie co wczytuje
+    #print(all_files) #sprawdzenie co wczytuje
 
     df0 = pd.DataFrame()
     years=[]
@@ -24,7 +24,7 @@ def load_data():
         df['Year'] = year
         df0 = df0.append(df)
 
-    df0=df0.rename(columns={0: 'Name', 1: 'Sex', 2: 'Number'})
+    df0 = df0.rename(columns={0: 'Name', 1: 'Sex', 2: 'Number'})
 
     return df0, years
 
@@ -61,15 +61,15 @@ def task4(df0, ifprint):
     return results
 
 def task5(df0, years):
-    df_p=pd.pivot_table(df0, index=['Name'], columns=['Year', 'Sex'])
-    df_p=df_p['Number']
-    n_births=[]
+    df_p = pd.pivot_table(df0, index=['Name'], columns=['Year', 'Sex'])
+    df_p = df_p['Number']
+    n_births = []
 
     for i in years:
         n_births.append(df_p[i].sum())
 
-    total_n_births=[]
-    births_ratio_f_to_m=[]
+    total_n_births = []
+    births_ratio_f_to_m = []
 
     for i in range(0, len(n_births)):
         #[x][y] x - nr probki(rok), y - plec(0=f 1=m)
@@ -391,17 +391,68 @@ def task10(df0):
     #gui = show(df_test3)
     print("===================")
 
+def task9(df0):
+
+    df0['Last_letter'] = df0['Name'].str.strip().str[-1]
+    df0 = df0[['Year', 'Sex', 'Last_letter', 'Number']]
+    wanted_years = ['1915', '1965', '2018']
+
+    df0=df0[df0['Year'].isin(wanted_years)]
+    df_mal = df0[df0['Sex'] == 'M']
+
+    df_mal1 = df_mal[df_mal['Year'] == wanted_years[0]]
+    df_mal2 = df_mal[df_mal['Year'] == wanted_years[1]]
+    df_mal3 = df_mal[df_mal['Year'] == wanted_years[2]]
+
+    n_births_1 = df_mal1['Number'].sum()
+    n_births_2 = df_mal2['Number'].sum()
+    n_births_3 = df_mal3['Number'].sum()
+    df_mal1 = df_mal1.groupby(by=['Last_letter']).sum()
+    df_mal2 = df_mal2.groupby(by=['Last_letter']).sum()
+    df_mal3 = df_mal3.groupby(by=['Last_letter']).sum()
+
+    df_mal1['Births this year'] = n_births_1
+    df_mal1['letter_freq'] = df_mal1['Number']/df_mal1['Births this year']
+
+    df_mal2['Births this year'] = n_births_2
+    df_mal2['letter_freq'] = df_mal2['Number']/df_mal2['Births this year']
+
+    df_mal3['Births this year']=n_births_3
+    df_mal3['letter_freq'] = df_mal3['Number']/df_mal3['Births this year']
+
+    f, axes = plt.subplots(3)
+    w = 0.5
+    axes[0].bar(df_mal1.index.values, df_mal1['letter_freq'], width=w, color='b', align='center')
+    axes[1].bar(df_mal2.index.values, df_mal2['letter_freq'], width=w, color='g', align='center')
+    axes[2].bar(df_mal3.index.values, df_mal3['letter_freq'], width=w, color='r', align='center')
+
+    axes[0].set_title("1915 rok")
+    axes[1].set_title("1965 rok")
+    axes[2].set_title("2018 rok")
+
+    plt.show()
+
+    df_merged = pd.merge(df_mal3, df_mal1, left_index=True, right_index=True)
+    df_merged['freq_diff']=abs(df_merged['letter_freq_x']-df_merged['letter_freq_y'])
+    df_merged = df_merged.sort_values(by='freq_diff', ascending=False)
+    index_list = df_merged.index.values
+    print("Zadanie 9:")
+    print("3 litery dla których zaobserowowano najwieksza zmiane")
+    print(index_list[:3])
+
+
 if __name__ == '__main__':
     df, years=load_data()
     data_from4 = task4(df, False)
     data_from6, mal_df, fem_df = task6(data_from4, years, False)
 
     #wywolywanie kolejnych zadan
-    # task2_3(df)
-    # task4(df, True)
-    # task5(df, years)
-    # task6(data_from4, years, True)
-    # task7(df, years, data_from6, data_from4)
-    # task8(df, years, mal_df, fem_df)
+    task2_3(df)
+    task4(df, True)
+    task5(df, years)
+    task6(data_from4, years, True)
+    task7(df, years, data_from6, data_from4)
+    task8(df, years, mal_df, fem_df)
+    task9(df)
     task10(df)
-    # task12_13_14(df)
+    task12_13_14(df)
